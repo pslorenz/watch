@@ -41,7 +41,7 @@ A client list plus each client's vendor stack is a target list. watch is built s
 4. **Optional:** add a `WATCH_WEBHOOK` secret for Slack or Teams. The payload is `{"text": ...}`. Slack incoming webhooks take that as-is. A Teams Workflows webhook needs a flow that reads the `text` field.
 5. **Optional:** set the `SICK_CALL_REPO` Actions variable if you run your own sick-call copy. The default is `pslorenz/sick-call`.
 
-The daily workflow runs at 10:41 UTC, after sick-call. It commits `out/`, `state/`, and `DIGEST.md` to your private repo, and alerts only on new items. It uses a few minutes a day of the private-repo Actions allowance.
+A watch runs every 4 hours, and each one adds a timestamped entry to the day's log (`0241Z  All quiet. Feeds checked: ...`). The first watch at or after 10:00 UTC, after sick-call's run, is the full watch with the vendor checks. The rest check leak sites only, because a client named mid-negotiation is the one alert where hours matter. Each watch commits `out/`, `state/`, and `DIGEST.md` to your private repo when something changed, and alerts only on new items. That's about 6 runs a day, roughly 360 minutes a month, within the free private-repo allowance.
 
 **Don't** publish the output with GitHub Pages. Pages from a private repo are public unless your org has Enterprise Cloud private Pages.
 
@@ -56,9 +56,9 @@ The daily workflow runs at 10:41 UTC, after sick-call. It commits `out/`, `state
 | Feed | Default | Notes |
 |---|---|---|
 | RansomLook | on | Open source, no API key, and you can self-host it. |
-| ransomware.live v2 | off | The free API is marked for personal use. An MSP running this for clients should use the commercial API or self-hosted RansomLook. |
+| ransomware.live Pro | off | Free, with a personal token from my.ransomware.live, stored as the `RANSOMWARE_LIVE_TOKEN` secret. The terms ban **commercial use, including paid services, without the owner's written approval**, so an MSP should get that approval first. They also require crediting and linking ransomware.live wherever the data appears (the watch log does this), and ban re-serving the data as a feed or API. Its records include the victim's website, so you get more domain matches. Confirm the endpoint path and token header against the Pro API docs before you enable it. |
 
-Endpoints are set in `watch.json`, because public APIs move. If a feed fails, the digest says so ("no news from a dead feed is not good news"), and the rest of the run still completes.
+Endpoints are set in `watch.json`, because public APIs move. Tokens come from environment variables (Actions secrets), never from the file. A daily run is well inside every feed's fair-use terms. If a feed fails, the digest says so ("no news from a dead feed is not good news"), and the rest of the run still completes.
 
 ## Try it
 

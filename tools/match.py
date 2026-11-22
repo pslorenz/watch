@@ -62,3 +62,13 @@ def match_entity(entity, victim, website="", text=""):
 def canonical(vendor):
     """'ConnectWise, Inc.' -> 'connectwise'. Vendor names compared after normalize()."""
     return normalize(vendor)
+
+
+def defang(s):
+    """For anything a person reads: hxxps[://]example[.]com. Raw values stay in the JSON record,
+    where tools (Winnow) need the real domain and nobody clicks. Also stops Teams/Slack link previews
+    from fetching victim or leak-site pages on our behalf."""
+    if not s:
+        return s
+    s = re.sub(r"(?i)\bhttp(s?)://", r"hxxp\1[://]", s)
+    return re.sub(r"(?<=[a-z0-9])\.(?=[a-z0-9-]+(?:[./:?\s\"')]|$))", "[.]", s, flags=re.I)

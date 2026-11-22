@@ -1,0 +1,5 @@
+{"victims": [
+  {"victim": "Pinecrest Family Dental PLLC", "domain": "pinecrestdental.example", "group": "akira", "attackdate": "2026-11-19 08:00:00", "url": "http://akiraxxxxxxxxxxxx.onion/pinecrest"},
+  {"victim": "Example Freight Co", "domain": "https://examplefreight.example/", "group": "play", "attackdate": "2026-11-21 02:00:00", "url": "https://www.ransomware.live/id/abc"},
+  {"victim": "Example Manufacturing, Inc", "domain": "https://examplemanf.example/", "group": "play", "attackdate": "2026-11-21 07:00:00", "url": "https://www.ransomware.live/id/def"}
+]}

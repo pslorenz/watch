@@ -2,7 +2,8 @@
   "_comment": "Copy to watch.json. Settings only, no client data. Check each feed's terms before turning it on.",
   "feeds": {
     "ransomlook": {"enabled": true, "url": "https://www.ransomlook.io/api/recent"},
-    "ransomware_live": {"enabled": false, "url": "https://api.ransomware.live/v2/recentvictims"}
+    "ransomware_live": {"enabled": false, "url": "https://api-pro.ransomware.live/victims/recent",
+                        "token_env": "RANSOMWARE_LIVE_TOKEN", "token_header": "X-API-KEY"}
   },
   "alert_detail": "generic"
 }

@@ -20,7 +20,7 @@
 </head>
 <body>
 <h1>watch viewer</h1>
-<p class="note">Open a day's <code>out/YYYY-MM-DD.json</code>. The file is read in this browser tab only: nothing is uploaded, fetched, or stored.
+<p class="note">Feed-sourced names and domains are shown defanged. Open a day's <code>out/YYYY-MM-DD.json</code>. The file is read in this browser tab only: nothing is uploaded, fetched, or stored.
 Leak-site posts are claims by criminals, not confirmed breaches.</p>
 <div class="bar">
   <input type="file" id="file" accept=".json,application/json">
@@ -34,6 +34,8 @@ Leak-site posts are claims by criminals, not confirmed breaches.</p>
 <tbody id="rows"></tbody></table>
 <div id="empty">No file loaded.</div>
 <script>
+const defang = s => (s || "").replace(/http(s?):\/\//gi, "hxxp$1[://]")
+  .replace(/([a-z0-9])\.(?=[a-z0-9-]+([\/:?\s"')]|$))/gi, "$1[.]");
 const LABEL = {leak_claim:"Client on a leak site", vendor_leak_claim:"Vendor on a leak site", vendor_vuln:"Vendor at sick call"};
 let data = null;
 const $ = id => document.getElementById(id);
@@ -49,7 +51,7 @@ function render() {
     const sc = h.sick_call ? ` (rung ${h.sick_call.rung}, ${h.sick_call.window})` : "";
     const match = h.confidence === "domain" ? "domain" : h.confidence === "name" ? "name: review" : "vendor";
     tr.append(td(h.new ? "NEW" : "", "new"), td(h.client), td(LABEL[h.kind] || h.kind), td(h.subject),
-              td((h.victim || "") + sc), td(h.group), td(h.date), td(match, h.confidence), td(h.source));
+              td(h.kind === "vendor_vuln" ? (h.victim || "") + sc : defang(h.victim)), td(h.group), td(h.date), td(match, h.confidence), td([h.source, ...(h.also_seen_in || [])].join(", ")));
     body.append(tr);
   }
   $("empty").textContent = rows.length ? "" : "Nothing matches.";

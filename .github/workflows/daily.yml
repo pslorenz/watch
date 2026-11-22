@@ -1,8 +1,8 @@
-name: watch daily
+name: watch
 # Runs only in a PRIVATE copy that has a watchlist (secret or file). In the public repo it exits clean.
 on:
   schedule:
-    - cron: "41 10 * * *"          # after sick-call's 10:17 UTC run
+    - cron: "41 */4 * * *"         # a watch every 4 hours; the 10:41 one is the full watch, after sick-call
   workflow_dispatch:
 
 permissions:
@@ -39,7 +39,16 @@ jobs:
 
       - name: Watch
         if: env.SKIP != '1'
-        run: python3 tools/watch.py --sick-call-log /tmp/sick-call/log
+        env:
+          RANSOMWARE_LIVE_TOKEN: ${{ secrets.RANSOMWARE_LIVE_TOKEN }}
+        run: |
+          # Manual run: full watch. Scheduled: --auto does the full watch once a day (first run at or
+          # after 10:00 UTC, so a late start still counts) and leak sites only the rest of the time.
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            python3 tools/watch.py --sick-call-log /tmp/sick-call/log
+          else
+            python3 tools/watch.py --auto --sick-call-log /tmp/sick-call/log
+          fi
 
       - name: Commit the record
         if: env.SKIP != '1'
