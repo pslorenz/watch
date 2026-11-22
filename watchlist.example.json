@@ -1,0 +1,30 @@
+{
+  "_comment": "FICTIONAL clients for the demo. Your real list goes in watchlist.json in a PRIVATE copy only: a client list plus their vendor stack is a target list. See README.",
+  "clients": [
+    {
+      "id": "pinecrest",
+      "name": "Pinecrest Family Dental",
+      "aliases": ["Pinecrest Dental"],
+      "domains": ["pinecrestdental.example"],
+      "vendors": [
+        {"name": "Henry Schein One", "domains": ["henryscheinone.example"]},
+        "ConnectWise",
+        "SonicWall"
+      ]
+    },
+    {
+      "id": "harbormain",
+      "name": "Harbor & Main CPA",
+      "aliases": ["Harbor and Main CPA", "Harbor and Main"],
+      "domains": ["harbormaincpa.example"],
+      "vendors": ["Fortinet", "Intuit"]
+    },
+    {
+      "id": "acmetool",
+      "name": "Acme Tool",
+      "aliases": ["ACME"],
+      "domains": ["acmetool.example"],
+      "vendors": ["Ubiquiti"]
+    }
+  ]
+}

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'">
+<title>watch viewer</title>
+<style>
+  :root { --bg:#0f1115; --fg:#e6e6e6; --dim:#9aa0a6; --line:#2a2e36; --new:#f2b84b; --hi:#e5534b; --ok:#57ab5a; }
+  @media (prefers-color-scheme: light) { :root { --bg:#fff; --fg:#1f2328; --dim:#59636e; --line:#d1d9e0; } }
+  body { margin:0; padding:24px; background:var(--bg); color:var(--fg); font:14px/1.45 system-ui, sans-serif; }
+  h1 { font-size:20px; margin:0 0 4px; } p.note { color:var(--dim); margin:0 0 16px; max-width:70ch; }
+  .bar { display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-bottom:16px; }
+  input[type=search], select { background:transparent; color:var(--fg); border:1px solid var(--line); border-radius:6px; padding:6px 8px; }
+  table { border-collapse:collapse; width:100%; } th, td { text-align:left; padding:8px; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { color:var(--dim); font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:.04em; }
+  .new { color:var(--new); font-weight:600; } .domain { color:var(--hi); } .name { color:var(--new); } .vendor { color:var(--dim); }
+  .meta { color:var(--dim); font-size:12px; } #empty { color:var(--dim); padding:24px 0; }
+</style>
+</head>
+<body>
+<h1>watch viewer</h1>
+<p class="note">Open a day's <code>out/YYYY-MM-DD.json</code>. The file is read in this browser tab only: nothing is uploaded, fetched, or stored.
+Leak-site posts are claims by criminals, not confirmed breaches.</p>
+<div class="bar">
+  <input type="file" id="file" accept=".json,application/json">
+  <input type="search" id="q" placeholder="Filter (client, victim, group)">
+  <select id="kind"><option value="">All kinds</option><option value="leak_claim">Client on a leak site</option>
+    <option value="vendor_leak_claim">Vendor on a leak site</option><option value="vendor_vuln">Vendor at sick call</option></select>
+  <label><input type="checkbox" id="onlynew"> New only</label>
+  <span class="meta" id="meta"></span>
+</div>
+<table><thead><tr><th></th><th>Client</th><th>Kind</th><th>Subject</th><th>Victim / advisory</th><th>Group</th><th>Date</th><th>Match</th><th>Source</th></tr></thead>
+<tbody id="rows"></tbody></table>
+<div id="empty">No file loaded.</div>
+<script>
+const LABEL = {leak_claim:"Client on a leak site", vendor_leak_claim:"Vendor on a leak site", vendor_vuln:"Vendor at sick call"};
+let data = null;
+const $ = id => document.getElementById(id);
+function td(text, cls) { const c = document.createElement("td"); c.textContent = text ?? ""; if (cls) c.className = cls; return c; }
+function render() {
+  const body = $("rows"); body.replaceChildren();
+  if (!data) return;
+  const q = $("q").value.toLowerCase(), k = $("kind").value, onlyNew = $("onlynew").checked;
+  const rows = (data.hits || []).filter(h => (!k || h.kind === k) && (!onlyNew || h.new) &&
+    (!q || [h.client, h.subject, h.victim, h.group].join(" ").toLowerCase().includes(q)));
+  for (const h of rows) {
+    const tr = document.createElement("tr");
+    const sc = h.sick_call ? ` (rung ${h.sick_call.rung}, ${h.sick_call.window})` : "";
+    const match = h.confidence === "domain" ? "domain" : h.confidence === "name" ? "name: review" : "vendor";
+    tr.append(td(h.new ? "NEW" : "", "new"), td(h.client), td(LABEL[h.kind] || h.kind), td(h.subject),
+              td((h.victim || "") + sc), td(h.group), td(h.date), td(match, h.confidence), td(h.source));
+    body.append(tr);
+  }
+  $("empty").textContent = rows.length ? "" : "Nothing matches.";
+  $("meta").textContent = `${data.date} · ${data.hits.length} items · checked: ${(data.checked || []).join(", ")}` +
+    ((data.errors || []).length ? ` · ${data.errors.length} feed error(s)` : "");
+}
+$("file").addEventListener("change", e => {
+  const f = e.target.files[0]; if (!f) return;
+  f.text().then(t => { try { data = JSON.parse(t); render(); } catch { $("empty").textContent = "That isn't a watch day file."; } });
+});
+for (const id of ["q", "kind", "onlynew"]) $(id).addEventListener("input", render);
+</script>
+</body>
+</html>

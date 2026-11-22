@@ -1,0 +1,9 @@
+# Client data never lives in the public repo. In a PRIVATE copy, prefer the WATCHLIST_JSON secret;
+# if you commit the file instead, use `git add -f watchlist.json`.
+watchlist.json
+watch.json
+# Run output. The private copy's workflow force-adds these; the public repo never has them.
+out/
+state/
+DIGEST.md
+__pycache__/

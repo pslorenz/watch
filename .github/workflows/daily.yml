@@ -1,0 +1,69 @@
+name: watch daily
+# Runs only in a PRIVATE copy that has a watchlist (secret or file). In the public repo it exits clean.
+on:
+  schedule:
+    - cron: "41 10 * * *"          # after sick-call's 10:17 UTC run
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Refuse to run with client data in a public repo
+        env:
+          WATCHLIST_JSON: ${{ secrets.WATCHLIST_JSON }}
+        run: |
+          visibility=$(curl -fsSL -H "Authorization: Bearer ${{ github.token }}" \
+            "https://api.github.com/repos/${{ github.repository }}" | python3 -c "import json,sys; print(json.load(sys.stdin)['visibility'])")
+          if [ -z "$WATCHLIST_JSON" ] && [ ! -f watchlist.json ]; then
+            echo "No watchlist (public reference repo or not set up yet). Nothing to do."; echo "SKIP=1" >> "$GITHUB_ENV"; exit 0
+          fi
+          if [ "$visibility" != "private" ]; then
+            echo "::error::This repo is $visibility. watch only runs with client data in a private repo."; exit 1
+          fi
+          if [ -n "$WATCHLIST_JSON" ]; then printf '%s' "$WATCHLIST_JSON" > watchlist.json; fi
+
+      - name: Fetch sick-call's log
+        if: env.SKIP != '1'
+        run: |
+          git clone --depth 1 --filter=blob:none --sparse "https://github.com/${{ vars.SICK_CALL_REPO || 'pslorenz/sick-call' }}" /tmp/sick-call
+          git -C /tmp/sick-call sparse-checkout set log
+
+      - name: Watch
+        if: env.SKIP != '1'
+        run: python3 tools/watch.py --sick-call-log /tmp/sick-call/log
+
+      - name: Commit the record
+        if: env.SKIP != '1'
+        run: |
+          git config user.name "watch bot"
+          git config user.email "watch-bot@users.noreply.github.com"
+          git add -f out state DIGEST.md
+          git diff --cached --quiet || git commit -m "watch: $(date -u +%F)"
+          git push
+
+      - name: Alert
+        if: env.SKIP != '1'
+        env:
+          WEBHOOK: ${{ secrets.WATCH_WEBHOOK }}
+        run: |
+          if [ -z "$WEBHOOK" ]; then echo "No WATCH_WEBHOOK secret; digest only."; exit 0; fi
+          python3 - <<'PY'
+          import json, os, urllib.request
+          a = json.load(open("out/alerts.json"))
+          if a.get("send"):
+              req = urllib.request.Request(os.environ["WEBHOOK"], data=json.dumps({"text": a["text"]}).encode(),
+                                           headers={"Content-Type": "application/json"})
+              urllib.request.urlopen(req, timeout=30)
+              print("alert sent")
+          else:
+              print("nothing new")
+          PY
